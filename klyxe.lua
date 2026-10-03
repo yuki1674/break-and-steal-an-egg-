@@ -1,14 +1,14 @@
--- // Klyxe Hub - Custom UI Script (Break and Steal an Egg)
--- // Theme: All Blue / Cyan Accent
+-- // Klyxe Hub - Full Integration Script (Break and Steal an Egg)
+-- // Theme: All Blue / Cyan Accent with Minimize Button
 
 local CoreGui = game:GetService("CoreGui")
 
--- Prevent duplicate UI instances
+-- Prevent duplicate Klyxe Hub UI instances
 if CoreGui:FindFirstChild("KlyxeHub") then
     CoreGui.KlyxeHub:Destroy()
 end
 
--- ScreenGui Setup
+-- ScreenGui Setup para sa Klyxe Hub Menu
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "KlyxeHub"
 ScreenGui.Parent = CoreGui
@@ -25,12 +25,10 @@ MainFrame.Size = UDim2.new(0, 350, 0, 220)
 MainFrame.Active = true
 MainFrame.Draggable = true
 
--- UICorner for Smooth Edges
 local UICorner = Instance.new("UICorner")
 UICorner.CornerRadius = UDim.new(0, 10)
 UICorner.Parent = MainFrame
 
--- UIStroke for Blue Border Glow
 local UIStroke = Instance.new("UIStroke")
 UIStroke.Color = Color3.fromRGB(0, 120, 255) -- Blue border
 UIStroke.Thickness = 2
@@ -52,7 +50,6 @@ local HeaderCorner = Instance.new("UICorner")
 HeaderCorner.CornerRadius = UDim.new(0, 10)
 HeaderCorner.Parent = Header
 
--- Fix bottom corners of header to be square
 local HeaderCover = Instance.new("Frame")
 HeaderCover.Parent = Header
 HeaderCover.BackgroundColor3 = Color3.fromRGB(15, 25, 45)
@@ -60,7 +57,7 @@ HeaderCover.BorderSizePixel = 0
 HeaderCover.Position = UDim2.new(0, 0, 1, -5)
 HeaderCover.Size = UDim2.new(1, 0, 0, 5)
 
--- TikTok Watermark Label (Klyxe Hub)
+-- TikTok Watermark Label
 local TikTokLabel = Instance.new("TextLabel")
 TikTokLabel.Parent = MainFrame
 TikTokLabel.BackgroundTransparency = 1
@@ -68,14 +65,14 @@ TikTokLabel.Position = UDim2.new(0, 15, 0, 55)
 TikTokLabel.Size = UDim2.new(1, -30, 0, 30)
 TikTokLabel.Font = Enum.Font.GothamSemibold
 TikTokLabel.Text = "TikTok: @klyxehub"
-TikTokLabel.TextColor3 = Color3.fromRGB(130, 180, 255) -- Light blue text
+TikTokLabel.TextColor3 = Color3.fromRGB(130, 180, 255)
 TikTokLabel.TextSize = 14.0
 TikTokLabel.TextXAlignment = Enum.TextXAlignment.Left
 
 -- Action Button (Run Script)
 local ExecuteButton = Instance.new("TextButton")
 ExecuteButton.Parent = MainFrame
-ExecuteButton.BackgroundColor3 = Color3.fromRGB(0, 100, 230) -- Blue button
+ExecuteButton.BackgroundColor3 = Color3.fromRGB(0, 100, 230)
 ExecuteButton.Position = UDim2.new(0, 15, 0, 100)
 ExecuteButton.Size = UDim2.new(1, -30, 0, 45)
 ExecuteButton.Font = Enum.Font.GothamBold
@@ -95,11 +92,11 @@ StatusLabel.Position = UDim2.new(0, 15, 0, 160)
 StatusLabel.Size = UDim2.new(1, -30, 0, 30)
 StatusLabel.Font = Enum.Font.Gotham
 StatusLabel.Text = "Status: Ready"
-StatusLabel.TextColor3 = Color3.fromRGB(100, 200, 255) -- Cyan status
+StatusLabel.TextColor3 = Color3.fromRGB(100, 200, 255)
 StatusLabel.TextSize = 13.0
 StatusLabel.TextXAlignment = Enum.TextXAlignment.Left
 
--- Button Functionality (Executes the original script when clicked)
+-- Button Functionality: I-e-execute ang script at babaguhin ang kulay at pangalan ng ValueHat UI patungong Klyxe Hub
 ExecuteButton.MouseButton1Click:Connect(function()
     StatusLabel.Text = "Status: Executing..."
     
@@ -109,6 +106,31 @@ ExecuteButton.MouseButton1Click:Connect(function()
     
     if success then
         StatusLabel.Text = "Status: Successfully Executed!"
+        
+        -- Hahanapin ang nating ang lumabas na UI para palitan ang mga text at kulay nito patungong Klyxe Hub blue theme
+        task.spawn(function()
+            task.wait(0.5) -- Hintayin lumabas ang UI ng laro
+            for _, gui in ipairs(CoreGui:GetChildren()) do
+                if gui:IsA("ScreenGui") and gui ~= ScreenGui then
+                    for _, descendant in ipairs(gui:GetDescendants()) do
+                        -- Palitan ang ValueHat ng Klyxe Hub sa anumang text
+                        if descendant:IsA("TextLabel") or descendant:IsA("TextButton") then
+                            if string.find(string.lower(descendant.Text), "valuehat") then
+                                descendant.Text = "TikTok: @klyxehub"
+                            elseif string.find(string.lower(descendant.Text), "break and steal") then
+                                descendant.Text = "Klyxe Hub"
+                            end
+                        end
+                        -- Palitan ang background color ng mga elements patungong Blue
+                        if descendant:IsA("Frame") or descendant:IsA("ScrollingFrame") then
+                            descendant.BackgroundColor3 = Color3.fromRGB(12, 18, 30)
+                        elseif descendant:IsA("TextButton") or descendant:IsA("TextBox") then
+                            descendant.BackgroundColor3 = Color3.fromRGB(0, 100, 230)
+                        end
+                    end
+                end
+            end
+        end)
     else
         StatusLabel.Text = "Status: Error Executing!"
         warn(err)

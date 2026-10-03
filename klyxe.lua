@@ -1,5 +1,5 @@
 -- // Klyxe Hub - Full Integration Script (Break and Steal an Egg)
--- // Theme: All Blue / Cyan Accent with Treadmill & Custom Speed Boost (Max 1000)
+-- // Theme: All Blue / Cyan Accent with Fixed Teleport & Zero Lag
 
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
@@ -19,14 +19,14 @@ ScreenGui.Name = "KlyxeHub"
 ScreenGui.Parent = CoreGui
 ScreenGui.ResetOnSpawn = false
 
--- Main Frame (Pinalawak nang kaunti para magkasya ang Speed Boost)
+-- Main Frame
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
-MainFrame.BackgroundColor3 = Color3.fromRGB(10, 15, 25) -- Deep blue background
+MainFrame.BackgroundColor3 = Color3.fromRGB(10, 15, 25)
 MainFrame.BorderSizePixel = 0
-MainFrame.Position = UDim2.new(0.5, -175, 0.5, -160)
-MainFrame.Size = UDim2.new(0, 350, 0, 320)
+MainFrame.Position = UDim2.new(0.5, -175, 0.5, -180)
+MainFrame.Size = UDim2.new(0, 350, 0, 360)
 MainFrame.Active = true
 MainFrame.Draggable = true
 
@@ -35,7 +35,7 @@ UICorner.CornerRadius = UDim.new(0, 10)
 UICorner.Parent = MainFrame
 
 local UIStroke = Instance.new("UIStroke")
-UIStroke.Color = Color3.fromRGB(0, 120, 255) -- Blue border
+UIStroke.Color = Color3.fromRGB(0, 120, 255)
 UIStroke.Thickness = 2
 UIStroke.Parent = MainFrame
 
@@ -43,7 +43,7 @@ UIStroke.Parent = MainFrame
 local Header = Instance.new("TextLabel")
 Header.Name = "Header"
 Header.Parent = MainFrame
-Header.BackgroundColor3 = Color3.fromRGB(15, 25, 45) -- Blue header
+Header.BackgroundColor3 = Color3.fromRGB(15, 25, 45)
 Header.Size = UDim2.new(1, 0, 0, 40)
 Header.Font = Enum.Font.GothamBold
 Header.Text = "  Klyxe Hub"
@@ -104,11 +104,26 @@ local TreadmillCorner = Instance.new("UICorner")
 TreadmillCorner.CornerRadius = UDim.new(0, 8)
 TreadmillCorner.Parent = TreadmillButton
 
+-- Instant Steal Pet Toggle Button
+local GrabButton = Instance.new("TextButton")
+GrabButton.Parent = MainFrame
+GrabButton.BackgroundColor3 = Color3.fromRGB(25, 35, 55)
+GrabButton.Position = UDim2.new(0, 15, 0, 164)
+GrabButton.Size = UDim2.new(1, -30, 0, 34)
+GrabButton.Font = Enum.Font.GothamBold
+GrabButton.Text = "Instant Steal Teleport: OFF"
+GrabButton.TextColor3 = Color3.fromRGB(255, 100, 100)
+GrabButton.TextSize = 14.0
+
+local GrabCorner = Instance.new("UICorner")
+GrabCorner.CornerRadius = UDim.new(0, 8)
+GrabCorner.Parent = GrabButton
+
 -- Speed Boost Toggle Button
 local SpeedButton = Instance.new("TextButton")
 SpeedButton.Parent = MainFrame
 SpeedButton.BackgroundColor3 = Color3.fromRGB(25, 35, 55)
-SpeedButton.Position = UDim2.new(0, 15, 0, 164)
+SpeedButton.Position = UDim2.new(0, 15, 0, 206)
 SpeedButton.Size = UDim2.new(0, 215, 0, 34)
 SpeedButton.Font = Enum.Font.GothamBold
 SpeedButton.Text = "Speed Boost: OFF"
@@ -119,11 +134,11 @@ local SpeedCorner = Instance.new("UICorner")
 SpeedCorner.CornerRadius = UDim.new(0, 8)
 SpeedCorner.Parent = SpeedButton
 
--- Speed Input Box (TextBox sa gilid ng Speed Boost button, Max limit 1000)
+-- Speed Input Box
 local SpeedBox = Instance.new("TextBox")
 SpeedBox.Parent = MainFrame
 SpeedBox.BackgroundColor3 = Color3.fromRGB(20, 30, 48)
-SpeedBox.Position = UDim2.new(0, 240, 0, 164)
+SpeedBox.Position = UDim2.new(0, 240, 0, 206)
 SpeedBox.Size = UDim2.new(0, 95, 0, 34)
 SpeedBox.Font = Enum.Font.GothamBold
 SpeedBox.PlaceholderText = "Speed"
@@ -140,7 +155,7 @@ BoxCorner.Parent = SpeedBox
 local AfkButton = Instance.new("TextButton")
 AfkButton.Parent = MainFrame
 AfkButton.BackgroundColor3 = Color3.fromRGB(25, 35, 55)
-AfkButton.Position = UDim2.new(0, 15, 0, 206)
+AfkButton.Position = UDim2.new(0, 15, 0, 248)
 AfkButton.Size = UDim2.new(1, -30, 0, 34)
 AfkButton.Font = Enum.Font.GothamBold
 AfkButton.Text = "Anti-AFK: OFF"
@@ -155,7 +170,7 @@ AfkCorner.Parent = AfkButton
 local StatusLabel = Instance.new("TextLabel")
 StatusLabel.Parent = MainFrame
 StatusLabel.BackgroundTransparency = 1
-StatusLabel.Position = UDim2.new(0, 15, 0, 260)
+StatusLabel.Position = UDim2.new(0, 15, 0, 305)
 StatusLabel.Size = UDim2.new(1, -30, 0, 30)
 StatusLabel.Font = Enum.Font.Gotham
 StatusLabel.Text = "Status: Ready"
@@ -165,8 +180,12 @@ StatusLabel.TextXAlignment = Enum.TextXAlignment.Left
 
 -- Variables
 local autoTreadmillEnabled = false
+local instantGrabEnabled = false
 local speedBoostEnabled = false
 local antiAfkEnabled = false
+
+local savedBaseCFrame = nil -- Dito ise-save ang pwesto ng base mo
+local promptConnections = {}
 
 -- Anti-AFK Logic
 LocalPlayer.Idled:Connect(function()
@@ -177,7 +196,7 @@ LocalPlayer.Idled:Connect(function()
     end
 end)
 
--- Button Functionality: I-e-execute ang script at babaguhin ang kulay/pangalan ng ValueHat UI
+-- Execute Main Script
 ExecuteButton.MouseButton1Click:Connect(function()
     StatusLabel.Text = "Status: Executing..."
     
@@ -215,8 +234,13 @@ ExecuteButton.MouseButton1Click:Connect(function()
     end 
 end)
 
--- Teleport Function para sa Treadmill
+-- Treadmill Function
+local lastTreadmillCheck = 0
 local function teleportAndUseTreadmill()
+    local currentTime = tick()
+    if currentTime - lastTreadmillCheck < 0.2 then return end
+    lastTreadmillCheck = currentTime
+
     pcall(function()
         local character = LocalPlayer.Character
         if character and character:FindFirstChild("HumanoidRootPart") then
@@ -259,18 +283,98 @@ local function teleportAndUseTreadmill()
     end)
 end
 
--- Auto Treadmill Toggle Logic
+-- SETUP PROMPT PARA SA INSTANT STEAL
+local function setupPetPrompt(prompt)
+    if not prompt:IsA("ProximityPrompt") then return end
+    
+    local conn = prompt.Triggered:Connect(function(player)
+        if player == LocalPlayer and instantGrabEnabled then
+            pcall(function()
+                local character = LocalPlayer.Character
+                if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+                local hrp = character.HumanoidRootPart
+                
+                -- Kung walang naka-save na base, kunin ang kasalukuyang pwesto mo ngayon bilang base mo
+                if not savedBaseCFrame then
+                    savedBaseCFrame = hrp.CFrame
+                end
+                
+                -- Hanapin ang pet model o part
+                local petModel = prompt.Parent
+                local targetPart = nil
+                if petModel:IsA("Model") then
+                    targetPart = petModel.PrimaryPart or petModel:FindFirstChildWhichIsA("BasePart")
+                elseif petModel:IsA("BasePart") then
+                    targetPart = petModel
+                end
+                
+                -- Teleport agad sa saved base kasama ang pet
+                if targetPart and savedBaseCFrame then
+                    StatusLabel.Text = "Status: Pet Stolen! Teleported to Base."
+                    targetPart.CFrame = savedBaseCFrame + Vector3.new(0, 5, 0)
+                    hrp.CFrame = savedBaseCFrame + Vector3.new(0, 5, 0)
+                end
+            end)
+        end
+    end)
+    
+    table.insert(promptConnections, conn)
+end
+
+local function enableInstantSteal()
+    -- I-save muna ang pwesto mo ngayon sa base bago ka umalis lumayo
+    local character = LocalPlayer.Character
+    if character and character:FindFirstChild("HumanoidRootPart") then
+        savedBaseCFrame = character.HumanoidRootPart.CFrame
+        StatusLabel.Text = "Status: Base Saved! Ready to Steal."
+    end
+
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("ProximityPrompt") then
+            local parentName = obj.Parent and obj.Parent.Name:lower() or ""
+            local actionText = obj.ActionText and obj.ActionText:lower() or ""
+            if parentName:find("pet") or parentName:find("egg") or actionText:find("steal") or actionText:find("buy") then
+                setupPetPrompt(obj)
+            end
+        end
+    end
+end
+
+workspace.DescendantAdded:Connect(function(obj)
+    if instantGrabEnabled and obj:IsA("ProximityPrompt") then
+        setupPetPrompt(obj)
+    end
+end)
+
+-- Treadmill Toggle Logic
 TreadmillButton.MouseButton1Click:Connect(function()
     autoTreadmillEnabled = not autoTreadmillEnabled
     if autoTreadmillEnabled then
         TreadmillButton.Text = "Auto Treadmill: ON"
         TreadmillButton.TextColor3 = Color3.fromRGB(100, 255, 100)
         StatusLabel.Text = "Status: Connected to Treadmill!"
-        teleportAndUseTreadmill()
     else
         TreadmillButton.Text = "Auto Treadmill: OFF"
         TreadmillButton.TextColor3 = Color3.fromRGB(255, 100, 100)
         StatusLabel.Text = "Status: Auto Treadmill Stopped"
+    end
+end)
+
+-- Instant Steal Toggle Logic
+GrabButton.MouseButton1Click:Connect(function()
+    instantGrabEnabled = not instantGrabEnabled
+    if instantGrabEnabled then
+        GrabButton.Text = "Instant Steal Teleport: ON"
+        GrabButton.TextColor3 = Color3.fromRGB(100, 255, 100)
+        enableInstantSteal()
+    else
+        GrabButton.Text = "Instant Steal Teleport: OFF"
+        GrabButton.TextColor3 = Color3.fromRGB(255, 100, 100)
+        StatusLabel.Text = "Status: Instant Steal Disabled"
+        for _, conn in ipairs(promptConnections) do
+            if conn then conn:Disconnect() end
+        end
+        promptConnections = {}
     end
 end)
 
@@ -285,7 +389,6 @@ SpeedButton.MouseButton1Click:Connect(function()
         SpeedButton.Text = "Speed Boost: OFF"
         SpeedButton.TextColor3 = Color3.fromRGB(255, 100, 100)
         StatusLabel.Text = "Status: Speed Boost Disabled"
-        -- Ibalik sa normal speed (16) kapag naka-OFF
         pcall(function()
             if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
                 LocalPlayer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = 16
@@ -308,7 +411,7 @@ AfkButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- Main Loop para sa Auto Treadmill at Speed Boost (May 1000 limit check)
+-- Main Loop
 RunService.RenderStepped:Connect(function()
     if autoTreadmillEnabled then
         teleportAndUseTreadmill()
@@ -321,7 +424,6 @@ RunService.RenderStepped:Connect(function()
                 local humanoid = character:FindFirstChildOfClass("Humanoid")
                 if humanoid then
                     local speedVal = tonumber(SpeedBox.Text) or 16
-                    -- Limit check: hindi lalagpas ng 1000 ang bilis
                     if speedVal > 1000 then
                         speedVal = 1000
                         SpeedBox.Text = "1000"

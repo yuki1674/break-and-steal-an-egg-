@@ -1,5 +1,5 @@
 -- // Klyxe Hub - Full Integration Script (Break and Steal an Egg)
--- // Theme: All Blue / Cyan Accent with Fixed Teleport & Zero Lag
+-- // Theme: All Blue / Cyan Accent with Fixed Instant Steal & 10 HPS Fast Swing
 
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
@@ -25,8 +25,8 @@ MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
 MainFrame.BackgroundColor3 = Color3.fromRGB(10, 15, 25)
 MainFrame.BorderSizePixel = 0
-MainFrame.Position = UDim2.new(0.5, -175, 0.5, -180)
-MainFrame.Size = UDim2.new(0, 350, 0, 360)
+MainFrame.Position = UDim2.new(0.5, -175, 0.5, -215)
+MainFrame.Size = UDim2.new(0, 350, 0, 440)
 MainFrame.Active = true
 MainFrame.Draggable = true
 
@@ -119,11 +119,26 @@ local GrabCorner = Instance.new("UICorner")
 GrabCorner.CornerRadius = UDim.new(0, 8)
 GrabCorner.Parent = GrabButton
 
+-- Fast Swing 10 HPS Toggle Button
+local FastSwingButton = Instance.new("TextButton")
+FastSwingButton.Parent = MainFrame
+FastSwingButton.BackgroundColor3 = Color3.fromRGB(25, 35, 55)
+FastSwingButton.Position = UDim2.new(0, 15, 0, 206)
+FastSwingButton.Size = UDim2.new(1, -30, 0, 34)
+FastSwingButton.Font = Enum.Font.GothamBold
+FastSwingButton.Text = "Fast Swing (10 HPS): OFF"
+FastSwingButton.TextColor3 = Color3.fromRGB(255, 100, 100)
+FastSwingButton.TextSize = 14.0
+
+local FastSwingCorner = Instance.new("UICorner")
+FastSwingCorner.CornerRadius = UDim.new(0, 8)
+FastSwingCorner.Parent = FastSwingButton
+
 -- Speed Boost Toggle Button
 local SpeedButton = Instance.new("TextButton")
 SpeedButton.Parent = MainFrame
 SpeedButton.BackgroundColor3 = Color3.fromRGB(25, 35, 55)
-SpeedButton.Position = UDim2.new(0, 15, 0, 206)
+SpeedButton.Position = UDim2.new(0, 15, 0, 248)
 SpeedButton.Size = UDim2.new(0, 215, 0, 34)
 SpeedButton.Font = Enum.Font.GothamBold
 SpeedButton.Text = "Speed Boost: OFF"
@@ -138,7 +153,7 @@ SpeedCorner.Parent = SpeedButton
 local SpeedBox = Instance.new("TextBox")
 SpeedBox.Parent = MainFrame
 SpeedBox.BackgroundColor3 = Color3.fromRGB(20, 30, 48)
-SpeedBox.Position = UDim2.new(0, 240, 0, 206)
+SpeedBox.Position = UDim2.new(0, 240, 0, 248)
 SpeedBox.Size = UDim2.new(0, 95, 0, 34)
 SpeedBox.Font = Enum.Font.GothamBold
 SpeedBox.PlaceholderText = "Speed"
@@ -155,7 +170,7 @@ BoxCorner.Parent = SpeedBox
 local AfkButton = Instance.new("TextButton")
 AfkButton.Parent = MainFrame
 AfkButton.BackgroundColor3 = Color3.fromRGB(25, 35, 55)
-AfkButton.Position = UDim2.new(0, 15, 0, 248)
+AfkButton.Position = UDim2.new(0, 15, 0, 290)
 AfkButton.Size = UDim2.new(1, -30, 0, 34)
 AfkButton.Font = Enum.Font.GothamBold
 AfkButton.Text = "Anti-AFK: OFF"
@@ -170,7 +185,7 @@ AfkCorner.Parent = AfkButton
 local StatusLabel = Instance.new("TextLabel")
 StatusLabel.Parent = MainFrame
 StatusLabel.BackgroundTransparency = 1
-StatusLabel.Position = UDim2.new(0, 15, 0, 305)
+StatusLabel.Position = UDim2.new(0, 15, 0, 380)
 StatusLabel.Size = UDim2.new(1, -30, 0, 30)
 StatusLabel.Font = Enum.Font.Gotham
 StatusLabel.Text = "Status: Ready"
@@ -181,11 +196,11 @@ StatusLabel.TextXAlignment = Enum.TextXAlignment.Left
 -- Variables
 local autoTreadmillEnabled = false
 local instantGrabEnabled = false
+local fastSwingEnabled = false
 local speedBoostEnabled = false
 local antiAfkEnabled = false
 
-local savedBaseCFrame = nil -- Dito ise-save ang pwesto ng base mo
-local promptConnections = {}
+local savedBaseCFrame = nil 
 
 -- Anti-AFK Logic
 LocalPlayer.Idled:Connect(function()
@@ -283,66 +298,86 @@ local function teleportAndUseTreadmill()
     end)
 end
 
--- SETUP PROMPT PARA SA INSTANT STEAL
-local function setupPetPrompt(prompt)
-    if not prompt:IsA("ProximityPrompt") then return end
-    
-    local conn = prompt.Triggered:Connect(function(player)
-        if player == LocalPlayer and instantGrabEnabled then
+-- MAS PINATIBAY NA INSTANT STEAL TELEPORT (Binabantayan ang pagka-trigger ng prompt)
+task.spawn(function()
+    while true do
+        task.wait(0.05)
+        if instantGrabEnabled then
             pcall(function()
-                local character = LocalPlayer.Character
-                if not character or not character:FindFirstChild("HumanoidRootPart") then return end
-                local hrp = character.HumanoidRootPart
-                
-                -- Kung walang naka-save na base, kunin ang kasalukuyang pwesto mo ngayon bilang base mo
-                if not savedBaseCFrame then
-                    savedBaseCFrame = hrp.CFrame
-                end
-                
-                -- Hanapin ang pet model o part
-                local petModel = prompt.Parent
-                local targetPart = nil
-                if petModel:IsA("Model") then
-                    targetPart = petModel.PrimaryPart or petModel:FindFirstChildWhichIsA("BasePart")
-                elseif petModel:IsA("BasePart") then
-                    targetPart = petModel
-                end
-                
-                -- Teleport agad sa saved base kasama ang pet
-                if targetPart and savedBaseCFrame then
-                    StatusLabel.Text = "Status: Pet Stolen! Teleported to Base."
-                    targetPart.CFrame = savedBaseCFrame + Vector3.new(0, 5, 0)
-                    hrp.CFrame = savedBaseCFrame + Vector3.new(0, 5, 0)
+                local char = LocalPlayer.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    local hrp = char.HumanoidRootPart
+                    
+                    -- I-save ang kasalukuyang pwesto bilang base kung wala pa
+                    if not savedBaseCFrame then
+                        savedBaseCFrame = hrp.CFrame
+                    end
+                    
+                    for _, obj in ipairs(workspace:GetDescendants()) do
+                        if obj:IsA("ProximityPrompt") then
+                            local action = obj.ActionText and obj.ActionText:lower() or ""
+                            local object = obj.ObjectText and obj.ObjectText:lower() or ""
+                            
+                            if action:find("steal") or object:find("steal") then
+                                local parentPart = obj.Parent
+                                local targetPos = nil
+                                
+                                if parentPart and parentPart:IsA("BasePart") then
+                                    targetPos = parentPart.Position
+                                elseif parentPart and parentPart:IsA("Model") and parentPart.PrimaryPart then
+                                    targetPos = parentPart.PrimaryPart.Position
+                                end
+                                
+                                if targetPos then
+                                    local dist = (hrp.Position - targetPos).Magnitude
+                                    -- Kapag malapit ka na sa prompt at pinindot mo ito (o awtomatikong na-fire)
+                                    if dist <= 8 then
+                                        fireproximityprompt(obj)
+                                        task.wait(0.02)
+                                        if savedBaseCFrame then
+                                            StatusLabel.Text = "Status: Steal Triggered! Teleported to Base."
+                                            for i = 1, 5 do
+                                                hrp.CFrame = savedBaseCFrame + Vector3.new(0, 3, 0)
+                                                task.wait(0.01)
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
                 end
             end)
         end
-    end)
-    
-    table.insert(promptConnections, conn)
-end
-
-local function enableInstantSteal()
-    -- I-save muna ang pwesto mo ngayon sa base bago ka umalis lumayo
-    local character = LocalPlayer.Character
-    if character and character:FindFirstChild("HumanoidRootPart") then
-        savedBaseCFrame = character.HumanoidRootPart.CFrame
-        StatusLabel.Text = "Status: Base Saved! Ready to Steal."
     end
+end)
 
-    for _, obj in ipairs(workspace:GetDescendants()) do
-        if obj:IsA("ProximityPrompt") then
-            local parentName = obj.Parent and obj.Parent.Name:lower() or ""
-            local actionText = obj.ActionText and obj.ActionText:lower() or ""
-            if parentName:find("pet") or parentName:find("egg") or actionText:find("steal") or actionText:find("buy") then
-                setupPetPrompt(obj)
-            end
+-- FAST SWING 10 HPS LOGIC
+task.spawn(function()
+    while true do
+        task.wait(0.1) -- 10 hits per second
+        if fastSwingEnabled then
+            pcall(function()
+                local char = LocalPlayer.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    for _, obj in ipairs(workspace:GetDescendants()) do
+                        if obj:IsA("Model") and obj.Name:lower():find("egg") then
+                            local primary = obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")
+                            if primary then
+                                local dist = (char.HumanoidRootPart.Position - primary.Position).Magnitude
+                                if dist <= 20 then
+                                    for _, prompt in ipairs(obj:GetDescendants()) do
+                                        if prompt:IsA("ProximityPrompt") then
+                                            fireproximityprompt(prompt)
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end)
         end
-    end
-end
-
-workspace.DescendantAdded:Connect(function(obj)
-    if instantGrabEnabled and obj:IsA("ProximityPrompt") then
-        setupPetPrompt(obj)
     end
 end)
 
@@ -366,15 +401,29 @@ GrabButton.MouseButton1Click:Connect(function()
     if instantGrabEnabled then
         GrabButton.Text = "Instant Steal Teleport: ON"
         GrabButton.TextColor3 = Color3.fromRGB(100, 255, 100)
-        enableInstantSteal()
+        -- I-reset o i-save ang base CFrame sa eksaktong kinalalagyan mo ngayon
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            savedBaseCFrame = LocalPlayer.Character.HumanoidRootPart.CFrame
+        end
+        StatusLabel.Text = "Status: Base Saved & Instant Steal Active!"
     else
         GrabButton.Text = "Instant Steal Teleport: OFF"
         GrabButton.TextColor3 = Color3.fromRGB(255, 100, 100)
         StatusLabel.Text = "Status: Instant Steal Disabled"
-        for _, conn in ipairs(promptConnections) do
-            if conn then conn:Disconnect() end
-        end
-        promptConnections = {}
+    end
+end)
+
+-- Fast Swing Toggle Logic
+FastSwingButton.MouseButton1Click:Connect(function()
+    fastSwingEnabled = not fastSwingEnabled
+    if fastSwingEnabled then
+        FastSwingButton.Text = "Fast Swing (10 HPS): ON"
+        FastSwingButton.TextColor3 = Color3.fromRGB(100, 255, 100)
+        StatusLabel.Text = "Status: Fast Swing 10 HPS Active!"
+    else
+        FastSwingButton.Text = "Fast Swing (10 HPS): OFF"
+        FastSwingButton.TextColor3 = Color3.fromRGB(255, 100, 100)
+        StatusLabel.Text = "Status: Fast Swing Disabled"
     end
 end)
 
